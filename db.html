@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>卡片篩選範例</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px;  background-color: #000; color:#fff  }
+    .filter {
+      margin-bottom: 20px;
+    }
+    #cards-container {
+    display: flex;
+    flex-wrap: wrap;       /* 超出寬度時換行 */
+    gap: 15px;             /* 卡片間距 */
+    }
+    .card {
+        background-color: #fff;
+      border: 1px solid #ccc;
+      color:#000; 
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 2px 2px 5px #eee;
+      flex: 0 0 250px;       /* 固定寬度250px，禁止放大縮小 */
+        box-sizing: border-box;
+    }
+    .card span.description {
+  white-space: pre-line;
+}
+    .card h3 {
+      margin: 0 0 10px;
+      color:#4577c6
+    }
+    label {
+      margin-right: 10px;
+    }
+   select {
+        appearance: none;      /* 移除預設箭頭 */
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-color: #fff;
+        border: 1.5px solid #ccc;
+        border-radius: 6px;
+        padding: 8px 30px 8px 12px;
+        font-size: 16px;
+        cursor: pointer;
+        position: relative;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: border-color 0.3s ease;
+        outline: none;
+        min-width: 160px;
+        }
+
+        /* 加個箭頭小三角 */
+        select::-ms-expand {
+        display: none; /* IE */
+        }
+
+        .select-wrapper {
+        position: relative;
+        display: inline-block;
+        }
+
+        .select-wrapper::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        top: 50%;
+        right: 12px;
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid #555;
+        transform: translateY(-50%);
+        }
+
+        /* hover & focus */
+        select:hover {
+        border-color: #888;
+        }
+        select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 5px #3b82f6;
+        }
+
+  </style>
+</head>
+<body>
+
+  <div class="filter">
+    <label for="tag1">選擇類型:</label>
+    <select id="tag1">
+      <option value="local">位置</option>
+      <option value="frontEnd">前端功能</option>
+      <option value="backEnd">後端功能</option>
+       <option value="nameSet">名稱</option>
+    </select>
+
+    <label for="tag2">選擇條件:</label>
+    <select id="tag2">
+      <!-- 選項動態填充 -->
+    </select>
+  </div>
+
+  <div id="cards-container">
+    <!-- 卡片區 -->
+  </div>
+
+  <script src="data.js"></script>
+<script >
+ 
+ console.log(db);
+  
+  // DOM元素
+  const tag1Select = document.getElementById("tag1");
+  const tag2Select = document.getElementById("tag2");
+  const cardsContainer = document.getElementById("cards-container");
+
+  // 初始化tag2選項
+  function initTag2Options(type) {
+    // 找出所有該類型的tag
+   const allTags = Array.from(
+    db.reduce((set, item) => {
+        (item.tags[type] || []).forEach(tag => set.add(tag));
+        return set;
+    }, new Set())
+    ).sort(); // 這裡排序
+
+    
+    // allTags.pop();
+    // allTags.unshift("全部");
+    // 清空並重建選項
+    tag2Select.innerHTML = "";
+    allTags.forEach(tag => {
+      const option = document.createElement("option");
+      option.value = tag;
+      option.textContent = tag;
+      tag2Select.appendChild(option);
+    });
+  }
+
+  // 顯示符合條件的卡片
+  function renderCards(type, tag) {
+    // 過濾資料
+    const filtered = db.filter(item => {
+      return (item.tags[type] || []).includes(tag);
+    });
+
+    filtered.sort((a, b) => a.name.localeCompare(b.name));
+    
+
+    // 清空
+    cardsContainer.innerHTML = "";
+
+    if (filtered.length === 0) {
+      cardsContainer.textContent = "沒有符合條件的卡片";
+      return;
+    }
+
+    // 生成卡片
+    filtered.forEach(card => {
+      const cardDiv = document.createElement("div");
+      cardDiv.className = "card";
+      const frontEndFunctions = card.tags["frontEnd"].filter(f => f !== "全部");
+         const backEndFunctions = card.tags["backEnd"].filter(f => f !== "全部");
+            const local = card.tags["local"].filter(f => f !== "全部");
+      cardDiv.innerHTML = `
+        <h3>${card.name}</h3>
+        <span class="description">${card.description}</span>
+        <hr>
+        <span class="description"><strong>前端功能:</strong><br> ${frontEndFunctions.join(", ")}</span>
+        <hr>
+        <span class="description"><strong>後端功能:</strong><br> ${backEndFunctions.join(", ")}</span>
+        <hr>
+        <span class="description"><strong>位置:</strong> <br>${local.join(", ")}</span>
+      `;
+      cardsContainer.appendChild(cardDiv);
+    });
+  }
+
+  // 監聽事件
+  tag1Select.addEventListener("change", () => {
+    initTag2Options(tag1Select.value);
+    renderCards(tag1Select.value, tag2Select.value);
+  });
+
+  tag2Select.addEventListener("change", () => {
+    renderCards(tag1Select.value, tag2Select.value);
+  });
+
+  // 初始化
+  initTag2Options(tag1Select.value);
+  renderCards(tag1Select.value, tag2Select.value);
+</script>
+
+</body>
+</html>
